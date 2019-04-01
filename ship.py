@@ -32,7 +32,7 @@ class Ship:
     def center_ship(self):
         """ centrowanie pozycji """
         self.rect.centerx = self.screen_rect.centerx
-        self.rect.centery = self.screen_rect.top + 500
+        self.rect.bottom = self.screen_rect.bottom - 50
 
     def blitme(self):
         """Wyświetlenie statku w aktualnym polozeniu."""

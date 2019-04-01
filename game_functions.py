@@ -73,15 +73,17 @@ def check_play_button(settings, stats, play_button, mouse_x, mouse_y, aliens, sh
         ship.center_ship()
 
 
-def update_screen(ship, settings, bullets, aliens, stats, play_button):
+def update_screen(ship, settings, bullets, aliens, stats, play_button, sc_brd):
     """Uakualnianie obrazu gry"""
     settings.blit_bg()
     for bullet in bullets.sprites():
         bullet.blit_bullet()
     ship.blitme()
     aliens.draw(settings.screen)
-    #stats.blit_scores()
+    stats.blit_lives()
 
+    sc_brd.show_score()
+    # wyswietlanie przyciku tylko gry gra nieaktywna
     if not stats.game_active:
         play_button.draw_button()
 
@@ -89,7 +91,7 @@ def update_screen(ship, settings, bullets, aliens, stats, play_button):
     pygame.display.flip()
 
 
-def update_bullets(bullets, aliens, settings, ship_height, break_time):
+def update_bullets(bullets, aliens, settings, ship_height, break_time, stats, sc_brd):
     """Obsługa polozenia i ilosci pociskow"""
     bullets.update()
     # usuniecie zbednych pociskow
@@ -99,14 +101,19 @@ def update_bullets(bullets, aliens, settings, ship_height, break_time):
             bullets.remove(bullet)
 
     # sprawdzenie, czy jakikolwiek pocisk trafil jakiegokolwiek obcego
-    break_time = check_bullet_alien_collision(settings, ship_height, aliens, bullets, break_time)
+    break_time = check_bullet_alien_collision(settings, ship_height, aliens, bullets, break_time, stats, sc_brd)
 
     return break_time
 
 
-def check_bullet_alien_collision(settings, ship_height, aliens, bullets, break_time):
+def check_bullet_alien_collision(settings, ship_height, aliens, bullets, break_time, stats, sc_brd):
     """ Reakcja na kolizje obcego z pociskiem i ewentualnie tworenie nowej floty"""
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
+    if collisions:
+        for aliens in collisions.values():
+            stats.score += settings.alien_points * len(aliens)
+            sc_brd.prep_score()
+        check_high_score(stats, sc_brd)
     if len(aliens) == 0:
         break_time += 1
         bullets.empty()
@@ -184,8 +191,10 @@ def ship_hit(settings, stats, ship, aliens, bullets):
 
         sleep(0.2)
     else:
+        stats.reset_score()
         stats.game_active = False
         pygame.mouse.set_visible(True)
+
 
 
 def update_aliens(aliens, settings, ship, stats, bullets):
@@ -208,3 +217,9 @@ def check_aliens_bottom(settings, stats, ship, aliens, bullets):
         if alien.rect.bottom >= screen_rect.bottom:
             ship_hit(settings, stats, ship, aliens, bullets)
             break
+
+def check_high_score(stats, sc_brd):
+    """Sprawdzenie czy dany wynik jest najwyzszy"""
+    if stats.score > stats.high_score:
+        stats.high_score = stats.score
+        sc_brd.prep_high_score()
